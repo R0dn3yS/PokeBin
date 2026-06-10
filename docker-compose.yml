@@ -1,22 +1,40 @@
 services:
   app:
     build: .
+    restart: unless-stopped
+    depends_on:
+      - db
     expose:
       - "2000"
     networks:
-      - coolify
+      - pokebin
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=pokebin
+      - POSTGRES_PASSWORD=pokebin
+      - POSTGRES_DB=pokebin
+    ports:
+      - 5432:5432
+    volumes:
+      - ./psql:/var/lib/postgresql/data
+    networks:
+      - pokebin
 
   nginx:
     image: nginx:1.27-alpine
     depends_on:
       - app
+      - db
     ports:
-      - "80:80"
+      - 6868:80
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
-      - coolify
+      - pokebin
 
 networks:
-  coolify:
-    external: true
+  pokebin:
+    driver: bridge

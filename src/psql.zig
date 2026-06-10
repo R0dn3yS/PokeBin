@@ -1,4 +1,5 @@
 const std = @import("std");
+const Io = std.Io;
 const pg = @import("pg");
 const zlog = @import("zlog");
 const lib = @import("pokebin_lib");
@@ -85,12 +86,14 @@ pub fn initDB(
     io: std.Io,
     config: lib.DBConfig,
 ) !*Pool {
+    std.debug.print("DEBUG HOST: {s}\n", .{ config.host });
+    io.sleep(.fromSeconds(10), .awake) catch {};
     const pool = try pg.Pool.init(io, allocator, .{ .size = 5, .connect = .{
-        .port = config.port,
-        .host = config.host,
+        .port = 5432,
+        .host = "db",
     }, .auth = .{
-        .username = config.user,
-        .password = config.pass,
+        .username = "pokebin",
+        .password = "pokebin",
         .database = "pokebin",
         .timeout = 10_000,
     } });
