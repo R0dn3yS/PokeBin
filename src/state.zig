@@ -268,16 +268,14 @@ pub const State = struct {
         if (std.mem.eql(u8, std.fs.path.extension(path), ".mp4")) return false;
         if (std.mem.eql(u8, std.fs.path.extension(path), ".br")) return false;
 
-        // Compress text-based formats and WASM
+        // Compress text-based formats and WASM only. PNG/JPG/WEBP are already
+        // compressed; Brotli'ing them wastes CPU during startup/cache warmup.
         return content_type == .HTML or
             content_type == .CSS or
             content_type == .JS or
             content_type == .JSON or
             content_type == .XML or
             content_type == .TEXT or
-            content_type == .PNG or
-            content_type == .JPG or
-            content_type == .WEBP or
             content_type == .WASM;
     }
 
@@ -296,7 +294,7 @@ pub const State = struct {
         const cwd = std.Io.Dir.cwd();
         const io = self.io;
         const file = cwd.openFile(io, path, .{}) catch |err| {
-            self.rwlock.unlockShared(self.io);
+            // Shared lock was already released above before filesystem I/O.
             zlog.err("Error opening file: {s} ({})", .{ path, err });
             return err;
         };
